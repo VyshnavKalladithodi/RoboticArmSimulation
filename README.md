@@ -24,7 +24,7 @@ robotic-arm-simulation/
 1. Clone the repository (if applicable):
 
     ```bash
-    git clone https://github.com/VyshnavKalladithodi/RoboticArmSimulation.git
+    git clone <repository_url>
     cd robotic-arm-simulation
     ```
 
@@ -47,26 +47,28 @@ python main.py
 By default, the simulation attempts to run in GUI mode first. If GUI mode fails (due to environment limitations), it falls back to DIRECT (headless) mode. The simulation performs the following steps:
 
 1. Initializes the PyBullet physics environment.
-2. Loads the plane, table, and KUKA robotic arm.
-3. Loads the gripper fingers and sets up constraints.
-4. Loads the soft object (sphere or cube).
-5. If sensor-based detection is enabled, it detects the object's position.
+2. Loads the plane, table, and KUKA robotic arm (fallback to Franka Panda if KUKA fails to load).
+3. Creates a simple box-based gripper and attaches it to the robot.
+4. Loads the soft object (sphere or cube) with realistic friction and elasticity properties.
+5. If sensor-based detection is enabled, it detects the object's position using color-based segmentation (HSV) and depth analysis.
 6. Moves the robotic arm to a home position.
 7. Moves the arm to a position above the object.
 8. Moves the arm to a grasping position.
-9. "Closes" the gripper (functionality modified due to URDF limitations).
+9. Uses constraints to simulate the gripper closing.
 10. Lifts the object.
 11. Moves the object to a new location.
 12. Places the object.
-13. "Opens" the gripper (functionality modified due to URDF limitations).
+13. Uses constraints to simulate the gripper opening.
 14. Moves back to the home position.
 15. Records a video of the simulation.
 
 ## Key Features
 
-- **Robotic Arm Control**: Simulates the movement and grasping actions of a KUKA robotic arm.
-- **Soft Object Grasping**: Attempts to grasp a soft object (sphere or cube). The gripper functionality has been modified due to URDF issues.
-- **Sensor-Based Object Detection**: Includes an optional sensor-based object detection mechanism (RGB-D camera simulation).
+- **Robotic Arm Control**: Simulates the movement and grasping actions of a KUKA robotic arm (fallback to Franka Panda if unavailable).
+- **Soft Object Grasping**: Attempts to grasp a soft object (sphere or cube) with realistic physics properties.
+- **Custom Gripper Mechanism**: Uses a constraint-based gripper rather than motorized joints for finger movement.
+- **Sensor-Based Object Detection**: Uses an RGB-D camera simulation with **HSV-based color segmentation**.
+- **Lighting & Visualization**: In GUI mode, shadows and camera angles are dynamically configured.
 - **Video Recording**: Records a video of the simulation, even in headless mode.
 - **Headless Mode Support**: Runs in headless mode (`p.DIRECT`) when GUI is not available.
 
@@ -79,24 +81,23 @@ By default, the simulation attempts to run in GUI mode first. If GUI mode fails 
 - `render_mode`: Specifies whether to use GUI or DIRECT mode for rendering.
 - `use_sensor`: Enables or disables sensor-based object detection.
 - Connects to PyBullet and sets up the environment, robot, and object.
-- Sets up video recording if `record_video` is enabled.
+- If `record_video` is enabled, initializes video recording.
 
 #### `_setup_environment(self)`
 - Loads the plane and table URDFs.
 - Handles errors in table loading by creating a simple box.
-- Configures debug visualizer settings if in GUI mode.
+- Configures debug visualizer settings and dynamic lighting in GUI mode.
 
 #### `_load_robot(self)`
-- Loads the KUKA robotic arm URDF.
-- If loading fails, attempts to load a Franka Panda robot.
-- Creates a virtual gripper and constraints.
+- Loads the KUKA robotic arm URDF (fallback to Franka Panda if unavailable).
+- Creates a simple box-based gripper with constraints for movement.
 - Prints loaded joints and sets home positions.
 
 #### `_setup_soft_object(self)`
-- Creates a soft object (sphere) with specified properties.
+- Creates a soft object (sphere) with **realistic friction, damping, and restitution properties**.
 
 #### `_setup_camera_sensor(self)`
-- Configures a virtual RGB-D camera for object detection.
+- Configures a virtual RGB-D camera for object detection using **HSV-based segmentation**.
 
 #### `_setup_video_recording(self)`
 - Creates a directory for videos.
@@ -109,7 +110,7 @@ By default, the simulation attempts to run in GUI mode first. If GUI mode fails 
 
 #### `detect_object_position(self)`
 - If `use_sensor` is disabled, returns the default object position.
-- Otherwise, captures RGB-D images and detects objects using color segmentation.
+- Otherwise, captures RGB-D images and detects objects using **color segmentation and depth analysis**.
 - Converts detected pixel coordinates and depth into world coordinates.
 
 #### `_pixel_to_world(self, pixel_x, pixel_y, depth)`
@@ -122,15 +123,15 @@ By default, the simulation attempts to run in GUI mode first. If GUI mode fails 
 - Waits for the robotic arm to stabilize at the target position.
 
 #### `open_gripper(self)`, `close_gripper(self)`
-- Controls the gripper's opening and closing movements.
+- Uses **constraints** to simulate the gripper opening and closing.
 
 #### `run_grasping_task(self)`
 - Executes the full grasping sequence:
   1. Moves to home position.
-  2. Detects the object position.
+  2. Detects the object position using **HSV-based segmentation**.
   3. Opens the gripper.
   4. Moves above and then to the object.
-  5. Closes the gripper.
+  5. Closes the gripper using constraints.
   6. Lifts and moves the object.
   7. Places and releases the object.
   8. Returns to home position.
@@ -152,6 +153,7 @@ By default, the simulation attempts to run in GUI mode first. If GUI mode fails 
 
 - **Inverse Kinematics**: Uses `p.calculateInverseKinematics()` to determine joint angles.
 - **Joint Motor Control**: Uses `p.setJointMotorControl2()` to apply movements.
+- **Constraint-Based Gripper Control**: Uses `p.createConstraint()` and `p.changeConstraint()` for gripper motion.
 - **Settling Check**: Ensures stability before proceeding with further actions.
 
 ## Troubleshooting
@@ -159,8 +161,8 @@ By default, the simulation attempts to run in GUI mode first. If GUI mode fails 
 - **GUI Issues**: If you encounter GUI issues, try running the simulation in `p.DIRECT` mode.
 - **Joint Index Errors**: Verify the joint indices for the gripper fingers.
 - **Video Corruption**: Ensure proper video writer closure and check frame data.
-- **Object Detection**: If object detection fails, check the camera sensor setup and object placement.
-- **Constraint Errors**: If you encounter constraint errors, ensure the correct use of the `changeConstraint` method.
+- **Object Detection**: If object detection fails, check the HSV color segmentation setup.
+- **Constraint Errors**: If you encounter constraint errors, ensure correct use of `p.createConstraint()` and `p.changeConstraint()`.
 
 ## Author
 
