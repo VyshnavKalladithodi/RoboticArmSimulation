@@ -345,6 +345,13 @@ class RoboticArmSimulation:
             #     # Don't let frame errors crash the whole simulation
             #     pass
 
+    def close_video(self):
+        try:
+            if self.record_video and hasattr(self, 'video_writer'):
+                self.video_writer.release()
+        finally:
+            p.disconnect()
+            
     def detect_object_position(self):
         """
         Use sensor data to detect the object's position
