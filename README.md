@@ -40,7 +40,7 @@ Run the simulation with:
 
 ```bash
 python main.py
-
+```
 By default, the simulation attempts to run in GUI mode first. If GUI mode fails (due to environment limitations), it falls back to DIRECT (headless) mode. The simulation performs the following steps:
 
 Initializes the PyBullet physics environment.
