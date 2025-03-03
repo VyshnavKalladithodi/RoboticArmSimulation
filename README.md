@@ -24,7 +24,7 @@ robotic-arm-simulation/
 1. Clone the repository (if applicable):
 
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/VyshnavKalladithodi/RoboticArmSimulation.git
     cd robotic-arm-simulation
     ```
 
